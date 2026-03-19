@@ -212,10 +212,30 @@ export interface PortfolioQuote {
   error?: boolean
 }
 
+export interface WatchlistItem {
+  ticker: string
+  yf_symbol: string
+  name: string
+  exchange: string
+  price?: number
+  change_percent_today?: number
+  currency?: string
+  rsi_14?: number
+  trend?: string
+  error?: boolean
+}
+
 export const marketApi = {
   quote: (ticker: string) => api<MarketData>(`/api/market/quote/${ticker}`),
   trending: () => api<TrendingStock[]>('/api/market/trending'),
   portfolioQuotes: () => api<PortfolioQuote[]>('/api/market/portfolio-quotes'),
+
+  // Watchlist
+  getWatchlist: () => api<WatchlistItem[]>('/api/market/watchlist'),
+  addWatchlist: (ticker: string, yf_symbol: string, name: string, exchange: string) =>
+    api('/api/market/watchlist', { method: 'POST', body: JSON.stringify({ ticker, yf_symbol, name, exchange }) }),
+  removeWatchlist: (ticker: string) =>
+    api(`/api/market/watchlist/${ticker}`, { method: 'DELETE' }),
 }
 
 // ── Stocks Catalog ────────────────────────────────────────────────────────

@@ -67,6 +67,10 @@ def user_budgets_col():
     """Per-user budget amounts. One doc per user containing budgets map."""
     return get_db()["user_budgets"]
 
+def user_watchlist_col():
+    """Per-user watchlist. Each doc: { user_id, ticker, yf_symbol, name, exchange, added_at }"""
+    return get_db()["user_watchlist"]
+
 
 # ── Master category seed ──────────────────────────────────────────────────
 
@@ -353,3 +357,34 @@ async def update_user_income(user_id: str, income: float):
         {"_id": ObjectId(user_id)},
         {"$set": {"monthly_income": income}}
     )
+
+# ── Watchlist helpers ─────────────────────────────────────────────────────
+
+async def get_user_watchlist(user_id: str) -> list:
+    """Return all watchlist items for a user, newest first."""
+    return await user_watchlist_col().find(
+        {"user_id": user_id}, {"_id": 0, "user_id": 0}
+    ).sort("added_at", -1).to_list(length=200)
+
+
+async def add_to_watchlist(user_id: str, ticker: str, yf_symbol: str, name: str, exchange: str) -> dict:
+    """Add a stock to user watchlist. No-op if already present (by ticker)."""
+    existing = await user_watchlist_col().find_one({"user_id": user_id, "ticker": ticker.upper()})
+    if existing:
+        return {"status": "exists", "ticker": ticker.upper()}
+    doc = {
+        "user_id":   user_id,
+        "ticker":    ticker.upper(),
+        "yf_symbol": yf_symbol or ticker.upper(),
+        "name":      name,
+        "exchange":  exchange,
+        "added_at":  datetime.now(timezone.utc),
+    }
+    await user_watchlist_col().insert_one(doc)
+    return {"status": "added", "ticker": ticker.upper(), "name": name}
+
+
+async def remove_from_watchlist(user_id: str, ticker: str) -> bool:
+    """Remove a stock from user watchlist."""
+    result = await user_watchlist_col().delete_one({"user_id": user_id, "ticker": ticker.upper()})
+    return result.deleted_count > 0

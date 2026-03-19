@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.chat import router as chat_router
 from app.api.portfolio import router as portfolio_router
-from app.api.routes import expenses_router, market_router
+from app.api.routes import expenses_router
 from app.api.market_extra import router as market_extra_router
 from app.api.auth import router as auth_router
 from app.api.stocks import router as stocks_router
@@ -22,7 +22,6 @@ app.add_middleware(
 app.include_router(chat_router)
 app.include_router(portfolio_router)
 app.include_router(expenses_router)
-app.include_router(market_router)
 app.include_router(market_extra_router)
 app.include_router(auth_router)
 app.include_router(stocks_router)

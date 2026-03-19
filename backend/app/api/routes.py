@@ -2,12 +2,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from app.db.mongo import (
-    get_expenses, add_expense, delete_expense, get_all_market_cache,
+    get_expenses, add_expense, delete_expense,
     get_user_budgets, update_user_budgets,
     get_all_categories_for_user, add_user_category, delete_user_category,
 )
 from app.core.auth import get_current_user, User
-from app.tools.market import get_market_analysis
 
 # ── Expenses ──────────────────────────────────────────────────────────────
 expenses_router = APIRouter(prefix="/api/expenses", tags=["expenses"])
@@ -102,17 +101,3 @@ async def remove_category(slug: str, current_user: Annotated[User, Depends(get_c
 async def remove_expense(expense_id: str, current_user: Annotated[User, Depends(get_current_user)]):
     await delete_expense(current_user.id, expense_id)
     return {"status": "deleted"}
-
-
-# ── Market ────────────────────────────────────────────────────────────────
-market_router = APIRouter(prefix="/api/market", tags=["market"])
-
-
-@market_router.get("/quote/{ticker}")
-async def quote(ticker: str):
-    return await get_market_analysis(ticker.upper())
-
-
-@market_router.get("/cache")
-async def market_cache():
-    return await get_all_market_cache()
